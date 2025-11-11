@@ -2,7 +2,7 @@
 
 ## 📋 Übersicht
 
-Der Payment Service ist Teil der Shop AG Integrationslösung und verarbeitet Zahlungen für Bestellungen.
+Der Payment Service ist Teil der AVG Integrationslösung und verarbeitet Zahlungen für Bestellungen.
 
 ## 🚀 Quick Start
 
@@ -175,7 +175,7 @@ curl -X POST http://localhost:8082/api/payment/process \
 payment-service/
 ├── src/
 │   ├── main/
-│   │   ├── java/de/hka/shopag/payment/
+│   │   ├── java/de/hka/avg/payment/
 │   │   │   ├── PaymentServiceApplication.java    # Main Class
 │   │   │   ├── controller/
 │   │   │   │   └── PaymentController.java        # REST Endpoints
