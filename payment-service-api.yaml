@@ -1,0 +1,220 @@
+openapi: 3.0.0
+info:
+  title: Payment Service API
+  description: REST API für den Payment Service der Shop AG
+  version: 1.0.0
+  contact:
+    name: Payment Team
+
+servers:
+  - url: http://localhost:8082/api
+    description: Local development server
+
+paths:
+  /payment/process:
+    post:
+      summary: Verarbeitet eine Zahlung
+      description: Nimmt eine Zahlungsanforderung entgegen und verarbeitet diese
+      operationId: processPayment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+            example:
+              orderId: "ORD-2025-10-16-7891"
+              customerId: "CUST-45823"
+              amount: 209.97
+              currency: "EUR"
+              paymentMethod: "CREDIT_CARD"
+              customerName: "Andreas Heberle"
+      responses:
+        '200':
+          description: Zahlung erfolgreich verarbeitet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+              example:
+                paymentId: "PAY-2025-11-09-12345"
+                orderId: "ORD-2025-10-16-7891"
+                status: "SUCCESS"
+                amount: 209.97
+                currency: "EUR"
+                transactionId: "TXN-987654321"
+                timestamp: "2025-11-09T14:30:00Z"
+                message: "Payment processed successfully"
+        '400':
+          description: Ungültige Anfrage
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: "FAILED"
+                errorCode: "INVALID_REQUEST"
+                message: "Invalid payment amount"
+                timestamp: "2025-11-09T14:30:00Z"
+        '402':
+          description: Zahlung fehlgeschlagen
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+              example:
+                paymentId: "PAY-2025-11-09-12346"
+                orderId: "ORD-2025-10-16-7891"
+                status: "FAILED"
+                amount: 209.97
+                currency: "EUR"
+                errorCode: "INSUFFICIENT_FUNDS"
+                message: "Insufficient funds"
+                timestamp: "2025-11-09T14:30:00Z"
+        '500':
+          description: Interner Serverfehler
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /payment/{paymentId}:
+    get:
+      summary: Ruft Zahlungsstatus ab
+      description: Gibt den Status einer Zahlung zurück
+      operationId: getPaymentStatus
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Die Payment ID
+          example: "PAY-2025-11-09-12345"
+      responses:
+        '200':
+          description: Zahlungsstatus erfolgreich abgerufen
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '404':
+          description: Zahlung nicht gefunden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    PaymentRequest:
+      type: object
+      required:
+        - orderId
+        - customerId
+        - amount
+        - currency
+        - paymentMethod
+      properties:
+        orderId:
+          type: string
+          description: Die Order ID aus dem OMS
+          example: "ORD-2025-10-16-7891"
+        customerId:
+          type: string
+          description: Die Customer ID
+          example: "CUST-45823"
+        amount:
+          type: number
+          format: double
+          description: Zahlungsbetrag
+          example: 209.97
+        currency:
+          type: string
+          description: Währung
+          example: "EUR"
+          enum: [EUR, USD, GBP]
+        paymentMethod:
+          type: string
+          description: Zahlungsmethode
+          example: "CREDIT_CARD"
+          enum: [CREDIT_CARD, DEBIT_CARD, PAYPAL, BANK_TRANSFER]
+        customerName:
+          type: string
+          description: Name des Kunden
+          example: "Andreas Heberle"
+
+    PaymentResponse:
+      type: object
+      required:
+        - paymentId
+        - orderId
+        - status
+        - amount
+        - currency
+        - timestamp
+      properties:
+        paymentId:
+          type: string
+          description: Eindeutige Payment ID
+          example: "PAY-2025-11-09-12345"
+        orderId:
+          type: string
+          description: Zugehörige Order ID
+          example: "ORD-2025-10-16-7891"
+        status:
+          type: string
+          description: Status der Zahlung
+          enum: [SUCCESS, FAILED, PENDING]
+          example: "SUCCESS"
+        amount:
+          type: number
+          format: double
+          description: Gezahlter Betrag
+          example: 209.97
+        currency:
+          type: string
+          description: Währung
+          example: "EUR"
+        transactionId:
+          type: string
+          description: Transaktions-ID der Bank/des Payment Providers
+          example: "TXN-987654321"
+        errorCode:
+          type: string
+          description: Fehlercode bei fehlgeschlagener Zahlung
+          example: "INSUFFICIENT_FUNDS"
+        message:
+          type: string
+          description: Beschreibung des Ergebnisses
+          example: "Payment processed successfully"
+        timestamp:
+          type: string
+          format: date-time
+          description: Zeitstempel der Transaktion
+          example: "2025-11-09T14:30:00Z"
+
+    ErrorResponse:
+      type: object
+      required:
+        - status
+        - message
+        - timestamp
+      properties:
+        status:
+          type: string
+          description: Fehlerstatus
+          example: "FAILED"
+        errorCode:
+          type: string
+          description: Fehlercode
+          example: "INVALID_REQUEST"
+        message:
+          type: string
+          description: Fehlerbeschreibung
+          example: "Invalid payment amount"
+        timestamp:
+          type: string
+          format: date-time
+          description: Zeitstempel des Fehlers
+          example: "2025-11-09T14:30:00Z"
